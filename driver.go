@@ -6,7 +6,8 @@ import (
 	// For outputting stuff to the screen
 	"time" // Used as part of "setInterval" and for pausing code to allow for data to come back
 
-	"github.com/Grayda/go-dell"           // The magic part that lets us control sockets
+	"github.com/Grayda/go-dell"
+	"github.com/davecgh/go-spew/spew"     // The magic part that lets us control sockets
 	"github.com/ninjasphere/go-ninja/api" // Ninja Sphere API
 	"github.com/ninjasphere/go-ninja/model"
 	"github.com/ninjasphere/go-ninja/support"
@@ -110,12 +111,13 @@ func theloop(d *ProjectorDriver, config *ProjectorDriverConfig) error {
 				}
 			case "projectorfound":
 				_, err = dell.AddProjector(msg.ProjectorInfo)
-				_, _ = newDevice(driver, driver.Conn, msg.ProjectorInfo)
+
 				fmt.Println("Projector with UUID of " + msg.ProjectorInfo.UUID + " was found at " + msg.ProjectorInfo.IP + ". Make: " + msg.ProjectorInfo.Make + ". Model:" + msg.ProjectorInfo.Model + ". Revision:" + msg.ProjectorInfo.Revision)
 			case "listening":
 				fmt.Println("Listening for projectors via DDDP")
 			case "projectoradded":
-				fmt.Println("================== Adding Device")
+				spew.Dump(msg.ProjectorInfo)
+				_, _ = newDevice(driver, driver.Conn, msg.ProjectorInfo)
 
 			}
 		}
