@@ -17,19 +17,19 @@ var info = ninja.LoadModuleInfo("./package.json")
 var serial string           // Declared but not used?
 var driver *ProjectorDriver // So we can access this in our configuration.go file
 
-// Are we ready to rock? This is sphere-orvibo only code by the way. You don't need to do this in your own driver?
+// Are we ready to rock? This is sphere-Projector only code by the way. You don't need to do this in your own driver?
 var ready = false
 var started = false // Stops us from running theloop twice
 
-// OrviboDriver holds info about our driver, including our configuration
+// ProjectorDriver holds info about our driver, including our configuration
 type ProjectorDriver struct {
 	support.DriverSupport
 	config *ProjectorDriverConfig // This is how we save and load IR codes and such. Call this by using driver.config
 	conn   *ninja.Connection
-	device map[string]*dell.Projector // A list of devices we've found. This is in addition to the list go-orvibo maintains
+	device map[string]*dell.Projector // A list of devices we've found. This is in addition to the list go-Projector maintains
 }
 
-// OrviboDriverConfig holds config info. The learningIR* stuff should be in its own struct, but I haven't got that far yet.
+// ProjectorDriverConfig holds config info.
 type ProjectorDriverConfig struct {
 	Initialised bool // Has our driver run once before?
 }
@@ -45,9 +45,9 @@ func defaultConfig() *ProjectorDriverConfig {
 // NewDriver does what it says on the tin: makes a new driver for us to run. This is called through main.go
 func NewProjectorDriver() (*ProjectorDriver, error) {
 
-	// Make a new OrviboDriver. Ampersand means to make a new copy, not reference the parent one (so A = new B instead of A = new B, C = A)
+	// Make a new ProjectorDriver. Ampersand means to make a new copy, not reference the parent one (so A = new B instead of A = new B, C = A)
 	driver = &ProjectorDriver{}
-	// Empty map of OrviboDevices
+	// Empty map of ProjectorDevices
 	driver.device = make(map[string]*dell.Projector)
 	// Initialize our driver. Throw back an error if necessary. Remember, := is basically a short way of saying "var blah string = 'abcd'"
 	err := driver.Init(info)
@@ -60,10 +60,10 @@ func NewProjectorDriver() (*ProjectorDriver, error) {
 	err = driver.Export(driver)
 
 	if err != nil {
-		log.Fatalf("Failed to export Orvibo driver: %s", err)
+		log.Fatalf("Failed to export Projector driver: %s", err)
 	}
 
-	// NewDriver returns two things, OrviboDriver, and an error if present
+	// NewDriver returns two things, ProjectorDriver, and an error if present
 	return driver, nil
 }
 
@@ -110,12 +110,15 @@ func theloop(d *ProjectorDriver, config *ProjectorDriverConfig) error {
 				}
 			case "projectorfound":
 				_, err = dell.AddProjector(msg.ProjectorInfo)
-				_, _ = newDevice(driver, driver.Conn, msg.ProjectorInfo)
-				fmt.Println("Projector with UUID of " + msg.ProjectorInfo.UUID + " was found at " + msg.ProjectorInfo.IP + ". Make: " + msg.ProjectorInfo.Make + ". Model:" + msg.ProjectorInfo.Model + ". Revision:" + msg.ProjectorInfo.Revision)
+				fmt.Println("Projector with UUID of " + msg.ProjectorInfo.UUID + " was found. Querying for details")
+				dell.GetStatus(msg.ProjectorInfo)
 			case "listening":
 				fmt.Println("Listening for projectors via DDDP")
+			case "namechanged": // We export the device after we've got the name from the projector. Otherwise you'd have a Projector with the MAC address as the name, and that makes no sense.
+				fmt.Println("Name changed")
+				_, _ = newDevice(driver, driver.Conn, msg.ProjectorInfo)
 			case "projectoradded":
-				fmt.Println("================== Adding Device")
+				fmt.Println("Connected to projector. Ready to start controlling")
 
 			}
 		}

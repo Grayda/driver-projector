@@ -15,9 +15,9 @@ type Device struct {
 func newDevice(driver ninja.Driver, conn *ninja.Connection, projector dell.Projector) (*Device, error) {
 
 	player, err := devices.CreateMediaPlayerDevice(driver, &model.Device{
-		NaturalID:     projector.UUID,
+		NaturalID:     projector.Name,
 		NaturalIDType: "dell-projector",
-		Name:          &projector.UUID,
+		Name:          &projector.Name,
 		Signatures: &map[string]string{
 			"ninja:manufacturer": "Dell",
 			"ninja:productName":  "Projector",
@@ -44,7 +44,7 @@ func newDevice(driver ninja.Driver, conn *ninja.Connection, projector dell.Proje
 	}
 
 	player.ApplyToggleMuted = func() error {
-		if projector.Muted == false {
+		if projector.VolumeMuted == false {
 			_, err := dell.SendCommand(projector, dell.Commands.Volume.Mute)
 			return err
 		} else {
